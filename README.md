@@ -4,7 +4,7 @@ REST API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Fronte
 
 ### Hosted Example
 
-REST API:
+REST API: https://socialnetworkapi-nodejs.herokuapp.com/
 
 Full App:
 
