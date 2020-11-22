@@ -2,12 +2,18 @@
 
 React frontend for the social network REST API.
 
-### Setup
+## Setup
 
-### Install
+### Environment Variables
+
+Create a .env file in the frontend folder, with the following variables:
+
+    REACT_APP_API_URL=http://localhost:8080
+
+## Install
 
     npm install
 
-### Run
+## Run
 
     npm start
