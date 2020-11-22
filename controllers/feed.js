@@ -3,35 +3,32 @@ const { validationResult } = require("express-validator");
 const s3Helper = require("../util/s3");
 
 const Post = require("../models/post");
+const User = require("../models/user");
 
 /**
  * Controller for getting all of the posts.
  *
  * Includes pagination.
  */
-exports.getPosts = (req, res, next) => {
+exports.getPosts = async (req, res, next) => {
   const currentPage = req.query.page || 1;
   const perPage = 2;
-  let totalItems;
-  Post.find()
-    .countDocuments()
-    .then((count) => {
-      totalItems = count;
-      return Post.find()
-        .skip((currentPage - 1) * perPage)
-        .limit(perPage);
-    })
-    .then((posts) => {
-      res.status(200).json({
-        message: "Fetched posts successfully.",
-        posts: posts,
-        totalItems: totalItems,
-      });
-    })
-    .catch((err) => {
-      if (!err.statusCode) err.statusCode = 500;
-      next(err);
+
+  try {
+    const totalItems = await Post.find().countDocuments();
+    const posts = await Post.find()
+      .populate("creator")
+      .skip((currentPage - 1) * perPage);
+
+    res.status(200).json({
+      message: "Fetched posts successfully.",
+      posts: posts,
+      totalItems: totalItems,
     });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  }
 };
 
 /**
@@ -39,7 +36,7 @@ exports.getPosts = (req, res, next) => {
  *
  * Checks for validation errors.
  *
- * Saves new post to mongodb.
+ * Saves new post to mongodb. User who created post is linked to it.
  *
  * Returns the new post, if successful.
  */
@@ -58,19 +55,31 @@ exports.createPost = (req, res, next) => {
   }
 
   // Save new post.
+  let savedPost;
+  let creator;
   const post = new Post({
     title: req.body.title,
     content: req.body.content,
     imageUrl: req.file.location,
     imageKey: req.file.key,
-    creator: { name: "Erin" },
+    creator: req.userId,
   });
   post
     .save()
     .then((result) => {
+      savedPost = result;
+      return User.findById(req.userId);
+    })
+    .then((user) => {
+      creator = user;
+      user.posts.push(post);
+      user.save();
+    })
+    .then((user) => {
       res.status(201).json({
         message: "Post created successfully!",
-        post: result,
+        post: savedPost,
+        creator: { _id: creator._id, name: creator.name },
       });
     })
     .catch((err) => {
@@ -104,6 +113,8 @@ exports.getPost = (req, res, next) => {
  *
  * Checks for validation errors.
  *
+ * Only the user that created the post can update it.
+ *
  * Deletes previous image from S3, if new one is added.
  */
 exports.updatePost = (req, res, next) => {
@@ -133,6 +144,13 @@ exports.updatePost = (req, res, next) => {
         throw error;
       }
 
+      // validate is one of this user's posts
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error("Not authorized.");
+        error.statusCode = 403;
+        throw error;
+      }
+
       // delete previous image, if new one selected
       if (imageUrl !== post.imageUrl) {
         s3Helper.deleteS3Object(post.imageKey);
@@ -159,6 +177,10 @@ exports.updatePost = (req, res, next) => {
 /**
  * Controller for deleting a specific post.
  *
+ * Only the user that created the post can delete it.
+ *
+ * Removes reference from user object of the post.
+ *
  * Deletes post from mongodb and post's image from S3.
  */
 exports.deletePost = (req, res, next) => {
@@ -169,9 +191,25 @@ exports.deletePost = (req, res, next) => {
         error.statusCode = 422;
         throw error;
       }
-      // check logged in user
+
+      // validate is one of this user's posts
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error("Not authorized.");
+        error.statusCode = 403;
+        throw error;
+      }
+
+      // delete image and post object
       s3Helper.deleteS3Object(post.imageKey);
       return Post.findByIdAndRemove(req.params.postId);
+    })
+    .then(() => {
+      return User.findById(req.userId);
+    })
+    .then((user) => {
+      // remove post from user
+      user.posts.pull(req.params.postId);
+      return user.save();
     })
     .then(() => {
       res.status(200).json({ message: "Deleted post." });

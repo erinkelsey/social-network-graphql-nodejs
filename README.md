@@ -111,4 +111,16 @@ Create a .env file in the main directory with the following environment variable
         <td>Log in a user.</td>
         <td>Should be application/json. Fields: email, password</td>
     </tr>
+    <tr>
+        <td>GET</td>
+        <td>/auth/status</td>
+        <td>Get the status for the user.</td>
+        <td>None</td>
+    </tr>
+    <tr>
+        <td>POST</td>
+        <td>/auth/status</td>
+        <td>Update the status for the user.</td>
+        <td>Should be application/json. Fields: status</td>
+    </tr>
 </table>
