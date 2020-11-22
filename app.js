@@ -10,6 +10,7 @@ const aws = require("aws-sdk");
 const multerS3 = require("multer-s3");
 
 const feedRoutes = require("./routes/feed");
+const authRoutes = require("./routes/auth");
 
 const app = express();
 
@@ -68,6 +69,7 @@ app.use((req, res, next) => {
  * Routes for app.
  */
 app.use("/feed", feedRoutes);
+app.use("/auth", authRoutes);
 
 /**
  * Middleware for handling errors.
@@ -76,7 +78,8 @@ app.use((error, req, res, next) => {
   console.log(error);
   const status = error.statusCode || 500;
   const message = error.message;
-  res.status(status).json({ message: message });
+  const data = error.data;
+  res.status(status).json({ message: message, data: data });
 });
 
 /**

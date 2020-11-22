@@ -2,6 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 
 const feedController = require("../controllers/feed");
+const isAuth = require("../middleware/is-auth");
 
 const router = express.Router();
 
@@ -10,17 +11,20 @@ const router = express.Router();
  *
  * Gets all of the posts.
  */
-router.get("/posts", feedController.getPosts);
+router.get("/posts", isAuth, feedController.getPosts);
 
 /**
  * POST method for /feed/post route.
  *
  * Create a new post.
  *
- * Validates the incoming fields.
+ * Validates on the following:
+ *  - title -> min chars 5
+ *  - content -> min chars 5
  */
 router.post(
   "/post",
+  isAuth,
   [
     body("title").trim().isLength({ min: 5 }),
     body("content").trim().isLength({ min: 5 }),
@@ -33,17 +37,20 @@ router.post(
  *
  * Get all of the details for a specific post.
  */
-router.get("/post/:postId", feedController.getPost);
+router.get("/post/:postId", isAuth, feedController.getPost);
 
 /**
  * PUT method for /feed/post/:postId route.
  *
  * Replace a specific post with a new version.
  *
- * Validates the incoming fields.
+ * Validates on the following:
+ *  - title -> min chars 5
+ *  - content -> min chars 5
  */
 router.put(
   "/post/:postId",
+  isAuth,
   [
     body("title").trim().isLength({ min: 5 }),
     body("content").trim().isLength({ min: 5 }),
@@ -56,6 +63,6 @@ router.put(
  *
  * Deletes a specific post.
  */
-router.delete("/post/:postId", feedController.deletePost);
+router.delete("/post/:postId", isAuth, feedController.deletePost);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 # Social Network REST API
 
-REST API for a Social Network App, built with NodeJS. Frontend built with React.
+REST API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Frontend built with React. Uses JWT for authentication.
 
 ### Hosted Example
 
@@ -48,6 +48,7 @@ Create a .env file in the main directory with the following environment variable
     AWS_SECRET_ACCESS_KEY=your_secret_access_key
     AWS_REGION=your_s3_bucket_region
     AWS_BUCKET_NAME=your_s3_bucket_name
+    JWT_SECRET_KEY=some_secret_key_for_signing_jwt
 
 ## Install
 
@@ -65,31 +66,49 @@ Create a .env file in the main directory with the following environment variable
             <th>Method</th>
             <th>Route</th>
             <th>Description</th>
+            <th>Request Body</th>
         </tr>
     </thead>
     <tr>
         <td>GET</td>
         <td>/feed/posts</td>
         <td>Get all of the posts.</td>
+        <td>None</td>
     </tr>
     <tr>
         <td>POST</td>
         <td>/feed/post</td>
-        <td>Create a new post. Request body should be multipart/form-data</td>
+        <td>Create a new post.</td>
+        <td>Should be multipart/form-data. Fields: title, content, image</td>
     </tr>
     <tr>
         <td>GET</td>
         <td>/feed/post/:postId</td>
         <td>Get details for a specific post.</td>
+        <td>None</td>
     </tr>
     <tr>
         <td>PUT</td>
         <td>/feed/post/:postId</td>
-        <td>Replace a specific post. Request body should be multipart/form-data</td>
+        <td>Replace a specific post.</td>
+        <td>Should be multipart/form-data. Fields: title, content, image -> all optional</td>
     </tr>
     <tr>
         <td>DELETE</td>
         <td>/feed/post/:postId</td>
         <td>Deletes a specific post.</td>
+        <td>None</td>
+    </tr>
+    <tr>
+        <td>PUT</td>
+        <td>/auth/signup</td>
+        <td>Sign up a new user.</td>
+        <td>Should be application/json. Fields: email, password, name</td>
+    </tr>
+    <tr>
+        <td>POST</td>
+        <td>/auth/login</td>
+        <td>Log in a user.</td>
+        <td>Should be application/json. Fields: email, password</td>
     </tr>
 </table>
