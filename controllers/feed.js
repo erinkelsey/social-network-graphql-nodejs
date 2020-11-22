@@ -3,17 +3,29 @@ const { validationResult } = require("express-validator");
 const s3Helper = require("../util/s3");
 
 const Post = require("../models/post");
-const router = require("../routes/feed");
 
 /**
  * Controller for getting all of the posts.
+ *
+ * Includes pagination.
  */
 exports.getPosts = (req, res, next) => {
+  const currentPage = req.query.page || 1;
+  const perPage = 2;
+  let totalItems;
   Post.find()
+    .countDocuments()
+    .then((count) => {
+      totalItems = count;
+      return Post.find()
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+    })
     .then((posts) => {
       res.status(200).json({
         message: "Fetched posts successfully.",
         posts: posts,
+        totalItems: totalItems,
       });
     })
     .catch((err) => {
