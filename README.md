@@ -87,4 +87,9 @@ Create a .env file in the main directory with the following environment variable
         <td>/feed/post/:postId</td>
         <td>Replace a specific post. Request body should be multipart/form-data</td>
     </tr>
+    <tr>
+        <td>DELETE</td>
+        <td>/feed/post/:postId</td>
+        <td>Deletes a specific post.</td>
+    </tr>
 </table>
