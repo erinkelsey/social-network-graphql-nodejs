@@ -10,6 +10,7 @@ const { graphqlHTTP } = require("express-graphql");
 
 const graphqlSchema = require("./graphql/schema");
 const graphqlResolver = require("./graphql/resolvers");
+const auth = require("./middleware/auth");
 
 const app = express();
 
@@ -64,6 +65,15 @@ app.use((req, res, next) => {
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
+
+/**
+ * Middleware for authenticating users.
+ *
+ * Add userId to request and set isAuth to true, if authenticated.
+ *
+ * Set isAuth to false, if not authenticated.
+ */
+app.use(auth);
 
 /**
  * Middleware for parsing the GraphQL requests.
