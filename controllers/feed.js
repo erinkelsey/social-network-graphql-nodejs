@@ -81,12 +81,12 @@ exports.createPost = (req, res, next) => {
       user.posts.push(post);
       user.save();
     })
-    .then((user) => {
+    .then(() => {
       io.getIO().emit("posts", {
         action: "create",
         post: {
           ...savedPost._doc,
-          creator: { _id: req.userId, name: user.name },
+          creator: { _id: req.userId, name: creator.name },
         },
       });
 
