@@ -355,4 +355,58 @@ module.exports = {
 
     return true;
   },
+
+  /**
+   * Get details for the user that sends the request.
+   *
+   * User must be authenticated.
+   */
+  user: async (args, req) => {
+    // check user authentication
+    if (!req.isAuth) {
+      const error = new Error("Not authenticated.");
+      error.code = 401;
+      throw error;
+    }
+
+    // get user
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const error = new Error("No user found.");
+      error.code = 401;
+      throw error;
+    }
+
+    // return user
+    return { ...user._doc, _id: user._id.toString() };
+  },
+
+  /**
+   * Update the user's status.
+   *
+   * User must be authenticated.
+   */
+  updateStatus: async ({ status }, req) => {
+    // check user authentication
+    if (!req.isAuth) {
+      const error = new Error("Not authenticated.");
+      error.code = 401;
+      throw error;
+    }
+
+    // get user
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const error = new Error("No user found.");
+      error.code = 401;
+      throw error;
+    }
+
+    // update status
+    user.status = status;
+    await user.save();
+
+    // return user
+    return { ...user._doc, _id: user._id.toString() };
+  },
 };
