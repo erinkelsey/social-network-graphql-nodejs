@@ -7,9 +7,6 @@ const multer = require("multer");
 const aws = require("aws-sdk");
 const multerS3 = require("multer-s3");
 
-const feedRoutes = require("./routes/feed");
-const authRoutes = require("./routes/auth");
-
 const app = express();
 
 /**
@@ -64,12 +61,6 @@ app.use((req, res, next) => {
 });
 
 /**
- * Routes for app.
- */
-app.use("/feed", feedRoutes);
-app.use("/auth", authRoutes);
-
-/**
  * Middleware for handling errors.
  */
 app.use((error, req, res, next) => {
@@ -82,8 +73,6 @@ app.use((error, req, res, next) => {
 
 /**
  * Connect to MongoDB, and listen on port 8080.
- *
- * Setup socket.io
  */
 mongoose
   .connect(process.env.MONGODB_CONNECTION, {
@@ -91,10 +80,6 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    const server = app.listen(process.env.PORT || 8080);
-    const io = require("./socket").init(server);
-    io.on("connection", (socket) => {
-      console.log("Client connected");
-    });
+    app.listen(process.env.PORT || 8080);
   })
   .catch((err) => console.log(err));

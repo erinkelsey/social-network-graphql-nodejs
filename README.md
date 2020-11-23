@@ -1,12 +1,12 @@
-# Social Network REST API
+# Social Network GraphQL API
 
-REST API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Frontend built with React. Uses JWT for authentication, and socket.io for websockets.
+GraphQL API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Frontend built with React. Uses JWT for authentication.
 
 ### Hosted Example
 
-REST API: https://socialnetworkapi-nodejs.herokuapp.com/
+REST API:
 
-Full App: http://socialnetworkapi-nodejs.s3-website.ca-central-1.amazonaws.com
+Full App:
 
 ### Frontend
 
@@ -57,70 +57,3 @@ Create a .env file in the main directory with the following environment variable
 ## Run
 
     npm start
-
-## REST API Endpoints
-
-<table>
-    <thead>
-        <tr>
-            <th>Method</th>
-            <th>Route</th>
-            <th>Description</th>
-            <th>Request Body</th>
-        </tr>
-    </thead>
-    <tr>
-        <td>GET</td>
-        <td>/feed/posts</td>
-        <td>Get all of the posts.</td>
-        <td>None</td>
-    </tr>
-    <tr>
-        <td>POST</td>
-        <td>/feed/post</td>
-        <td>Create a new post.</td>
-        <td>Should be multipart/form-data. Fields: title, content, image</td>
-    </tr>
-    <tr>
-        <td>GET</td>
-        <td>/feed/post/:postId</td>
-        <td>Get details for a specific post.</td>
-        <td>None</td>
-    </tr>
-    <tr>
-        <td>PUT</td>
-        <td>/feed/post/:postId</td>
-        <td>Replace a specific post.</td>
-        <td>Should be multipart/form-data. Fields: title, content, image -> all optional</td>
-    </tr>
-    <tr>
-        <td>DELETE</td>
-        <td>/feed/post/:postId</td>
-        <td>Deletes a specific post.</td>
-        <td>None</td>
-    </tr>
-    <tr>
-        <td>PUT</td>
-        <td>/auth/signup</td>
-        <td>Sign up a new user.</td>
-        <td>Should be application/json. Fields: email, password, name</td>
-    </tr>
-    <tr>
-        <td>POST</td>
-        <td>/auth/login</td>
-        <td>Log in a user.</td>
-        <td>Should be application/json. Fields: email, password</td>
-    </tr>
-    <tr>
-        <td>GET</td>
-        <td>/auth/status</td>
-        <td>Get the status for the user.</td>
-        <td>None</td>
-    </tr>
-    <tr>
-        <td>POST</td>
-        <td>/auth/status</td>
-        <td>Update the status for the user.</td>
-        <td>Should be application/json. Fields: status</td>
-    </tr>
-</table>
