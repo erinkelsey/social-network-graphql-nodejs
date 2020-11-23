@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const Post = require("../models/post");
 
+const s3Helper = require("../util/s3");
+
 module.exports = {
   /**
    * Resolver for creating a new user.
@@ -148,7 +150,7 @@ module.exports = {
       title: postInput.title,
       content: postInput.content,
       imageUrl: postInput.imageUrl,
-      imageKey: postInput.imageUrl,
+      imageKey: postInput.imageKey,
       creator: user,
     });
     const createdPost = await post.save();
@@ -202,5 +204,155 @@ module.exports = {
       }),
       totalPosts: totalPosts,
     };
+  },
+
+  /**
+   * Get a specific post.
+   *
+   * User must be authenticated.
+   */
+  post: async ({ id }, req) => {
+    // check user authentication
+    if (!req.isAuth) {
+      const error = new Error("Not authenticated.");
+      error.code = 401;
+      throw error;
+    }
+
+    // get post
+    const post = await Post.findById(id).populate("creator");
+    if (!post) {
+      const error = new Error("No post found.");
+      error.code = 401;
+      throw error;
+    }
+
+    // return post
+    return {
+      ...post._doc,
+      _id: post._id.toString(),
+      createdAt: post.createdAt.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
+    };
+  },
+
+  /**
+   * Update a specific post.
+   *
+   * User must be authenticated, and creator of the post.
+   *
+   * Validate post input fields.
+   *
+   * Only saves new image url and key, if one has been sent.
+   */
+  updatePost: async ({ id, postInput }, req) => {
+    // check user authentication
+    if (!req.isAuth) {
+      const error = new Error("Not authenticated.");
+      error.code = 401;
+      throw error;
+    }
+
+    // get post
+    const post = await Post.findById(id).populate("creator");
+    if (!post) {
+      const error = new Error("No post found.");
+      error.code = 401;
+      throw error;
+    }
+
+    // check user is one who created post
+    if (post.creator._id.toString() !== req.userId.toString()) {
+      const error = new Error("Not authorized.");
+      error.code = 403;
+      throw error;
+    }
+
+    // Validation errors
+    const errors = [];
+    if (
+      validator.isEmpty(postInput.title) ||
+      !validator.isLength(postInput.title, { min: 5 })
+    )
+      errors.push({ message: "Title is invalid." });
+
+    if (
+      validator.isEmpty(postInput.content) ||
+      !validator.isLength(postInput.content, { min: 5 })
+    )
+      errors.push({ message: "Content is invalid." });
+
+    if (errors.length > 0) {
+      const error = new Error("Invalid input.");
+      error.data = errors;
+      error.code = 422;
+      throw error;
+    }
+
+    // edit and save post
+    // only update image fields, if there was a new one added
+    post.title = postInput.title;
+    post.content = postInput.content;
+
+    if (postInput.imageUrl !== "undefined") {
+      post.imageUrl = postInput.imageUrl;
+      post.imageKey = postInput.imageKey;
+    }
+
+    const updatedPost = await post.save();
+
+    // return post
+    return {
+      ...updatedPost._doc,
+      _id: updatedPost._id.toString(),
+      createdAt: updatedPost.createdAt.toISOString(),
+      updatedAt: updatedPost.updatedAt.toISOString(),
+    };
+  },
+
+  /**
+   * Delete a specific post.
+   *
+   * Only the user that created the post can delete it.
+   *
+   * User must be authenticated.
+   *
+   * Image is also removed from S3.
+   *
+   * Post link is removed from user.
+   */
+  deletePost: async ({ id }, req) => {
+    // check user authentication
+    if (!req.isAuth) {
+      const error = new Error("Not authenticated.");
+      error.code = 401;
+      throw error;
+    }
+
+    // get post
+    const post = await Post.findById(id);
+    if (!post) {
+      const error = new Error("No post found.");
+      error.code = 401;
+      throw error;
+    }
+
+    // check user is one who created post
+    if (post.creator.toString() !== req.userId.toString()) {
+      const error = new Error("Not authorized.");
+      error.code = 403;
+      throw error;
+    }
+
+    // delete post image
+    s3Helper.deleteS3Object(post.imageKey);
+    await Post.findByIdAndRemove(id);
+
+    // remove post link from user that created it
+    const user = await User.findById(req.userId);
+    user.posts.pull(id);
+    await user.save();
+
+    return true;
   },
 };

@@ -11,6 +11,7 @@ const { graphqlHTTP } = require("express-graphql");
 const graphqlSchema = require("./graphql/schema");
 const graphqlResolver = require("./graphql/resolvers");
 const auth = require("./middleware/auth");
+const s3Helper = require("./util/s3");
 
 const app = express();
 
@@ -76,6 +77,29 @@ app.use((req, res, next) => {
 app.use(auth);
 
 /**
+ * Middleware for handling file uploads with a PUT request to /post-image route.
+ *
+ * Delete old image from s3, if there is an oldKey in the request body.
+ *
+ * Returns the file path and key.
+ *
+ * User must be authenticated.
+ */
+app.put("/post-image", (req, res, next) => {
+  if (!req.isAuth) throw new Error("Not authenticated.");
+
+  if (!req.file) return res.status(200).json({ message: "No file provided!" });
+
+  if (req.body.oldKey) s3Helper.deleteS3Object(req.body.oldKey);
+
+  return res.status(201).json({
+    message: "File stored",
+    filePath: req.file.location,
+    fileKey: req.file.key,
+  });
+});
+
+/**
  * Middleware for parsing the GraphQL requests.
  */
 app.use(
@@ -95,17 +119,6 @@ app.use(
     },
   })
 );
-
-/**
- * Middleware for handling errors.
- */
-app.use((error, req, res, next) => {
-  console.log(error);
-  const status = error.statusCode || 500;
-  const message = error.message;
-  const data = error.data;
-  res.status(status).json({ message: message, data: data });
-});
 
 /**
  * Connect to MongoDB, and listen on port 8080.
