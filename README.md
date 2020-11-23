@@ -1,6 +1,6 @@
 # Social Network REST API
 
-REST API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Frontend built with React. Uses JWT for authentication.
+REST API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Frontend built with React. Uses JWT for authentication, and socket.io for websockets.
 
 ### Hosted Example
 
