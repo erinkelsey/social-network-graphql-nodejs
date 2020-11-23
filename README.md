@@ -4,7 +4,7 @@ GraphQL API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Fro
 
 ### Hosted Example
 
-REST API:
+GraphQL API:
 
 Full App:
 
