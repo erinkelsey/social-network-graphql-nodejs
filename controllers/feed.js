@@ -81,7 +81,7 @@ exports.createPost = (req, res, next) => {
       user.posts.push(post);
       user.save();
     })
-    .then(() => {
+    .then((user) => {
       io.getIO().emit("posts", {
         action: "create",
         post: {
