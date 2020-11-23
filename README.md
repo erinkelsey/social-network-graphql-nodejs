@@ -4,9 +4,9 @@ GraphQL API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Fro
 
 ### Hosted Example
 
-GraphQL API:
+GraphQL API: https://social-network-graphql-nodejs.herokuapp.com/graphql
 
-Full App:
+Full App: http://socialnetworkgraphql-nodejs.s3-website.ca-central-1.amazonaws.com
 
 ### Frontend
 
