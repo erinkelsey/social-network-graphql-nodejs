@@ -2,6 +2,7 @@ const { validationResult } = require("express-validator");
 
 const s3Helper = require("../util/s3");
 
+const io = require("../socket");
 const Post = require("../models/post");
 const User = require("../models/user");
 
@@ -18,7 +19,9 @@ exports.getPosts = async (req, res, next) => {
     const totalItems = await Post.find().countDocuments();
     const posts = await Post.find()
       .populate("creator")
-      .skip((currentPage - 1) * perPage);
+      .skip((currentPage - 1) * perPage)
+      .sort({ createdAt: -1 }) // desc
+      .limit(2);
 
     res.status(200).json({
       message: "Fetched posts successfully.",
@@ -39,6 +42,9 @@ exports.getPosts = async (req, res, next) => {
  * Saves new post to mongodb. User who created post is linked to it.
  *
  * Returns the new post, if successful.
+ *
+ * Emits the post to all of the clients that are currently connected through
+ * websocket on the posts channel with a create action.
  */
 exports.createPost = (req, res, next) => {
   // Validation and image errors.
@@ -75,7 +81,15 @@ exports.createPost = (req, res, next) => {
       user.posts.push(post);
       user.save();
     })
-    .then((user) => {
+    .then(() => {
+      io.getIO().emit("posts", {
+        action: "create",
+        post: {
+          ...savedPost._doc,
+          creator: { _id: req.userId, name: user.name },
+        },
+      });
+
       res.status(201).json({
         message: "Post created successfully!",
         post: savedPost,
@@ -116,6 +130,9 @@ exports.getPost = (req, res, next) => {
  * Only the user that created the post can update it.
  *
  * Deletes previous image from S3, if new one is added.
+ *
+ * Emits the updated post to all of the clients that are currently connected through
+ * websocket on the posts channel with a update action.
  */
 exports.updatePost = (req, res, next) => {
   // Validation and file errors.
@@ -137,6 +154,7 @@ exports.updatePost = (req, res, next) => {
 
   // Update post
   Post.findById(req.params.postId)
+    .populate("creator")
     .then((post) => {
       if (!post) {
         const error = new Error("Could not find post.");
@@ -145,7 +163,7 @@ exports.updatePost = (req, res, next) => {
       }
 
       // validate is one of this user's posts
-      if (post.creator.toString() !== req.userId) {
+      if (post.creator._id.toString() !== req.userId) {
         const error = new Error("Not authorized.");
         error.statusCode = 403;
         throw error;
@@ -163,6 +181,7 @@ exports.updatePost = (req, res, next) => {
       return post.save();
     })
     .then((result) => {
+      io.getIO().emit("posts", { action: "update", post: result });
       res.status(200).json({
         message: "Post updated!",
         post: result,
@@ -182,6 +201,10 @@ exports.updatePost = (req, res, next) => {
  * Removes reference from user object of the post.
  *
  * Deletes post from mongodb and post's image from S3.
+ *
+ * Emits to all of the clients that are currently connected through
+ * websocket on the posts channel that a post has been deleted
+ * with a delete action.
  */
 exports.deletePost = (req, res, next) => {
   Post.findById(req.params.postId)
@@ -212,6 +235,7 @@ exports.deletePost = (req, res, next) => {
       return user.save();
     })
     .then(() => {
+      io.getIO().emit("posts", { action: "delete", post: req.params.postId });
       res.status(200).json({ message: "Deleted post." });
     })
     .catch((err) => {

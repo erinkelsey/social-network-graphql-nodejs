@@ -6,7 +6,7 @@ REST API for a Social Network App, built with NodeJS, mongoDB and AWS S3. Fronte
 
 REST API: https://socialnetworkapi-nodejs.herokuapp.com/
 
-Full App:
+Full App: http://socialnetworkapi-nodejs.s3-website.ca-central-1.amazonaws.com
 
 ### Frontend
 
